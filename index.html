@@ -316,8 +316,8 @@
             { name: "Mr Ario", role: "Camp Reception", phone: "+62 813 9713 7105", wa: "6281397137105", img: "https://i.imgur.com/0RPPvwl.png" },
             { name: "Mr Rais", role: "Camp Reception", phone: "+62 812 4056 3934", wa: "6281240563934", img: "https://i.imgur.com/xjjLFhK.png" },
             { name: "Mr Agung", role: "Camp Reception", phone: "+62 812 5805 6486", wa: "6281258056486", img: "https://i.imgur.com/B5yHfYH.png" },
-            { name: "Mr Deepak", role: "JGC Camp Team", phone: "+62 813-2288-259", wa: "628132288259", img: "https://i.imgur.com/gTWZ0Aw.png" },
-            { name: "Mr Mario", role: "JGC Camp Team", phone: "+62 823-1678-5900", wa: "6282316785900", img: "https://i.imgur.com/3v7R09m.png" }
+            { name: "Mr Deepak", role: "JGC Camp Manager", phone: "+62 813-2288-259", wa: "628132288259", img: "https://i.imgur.com/gTWZ0Aw.png" },
+            { name: "Mr Mario", role: "JGC Camp Admin", phone: "+62 823-1678-5900", wa: "6282316785900", img: "https://i.imgur.com/3v7R09m.png" }
         ];
 
         const campDatabase = {
@@ -407,7 +407,7 @@
                 options: {
                     ...getCommonOptions(animationMode),
                     // Adjusted padding for big chart size
-                    layout: { padding: 40 }, 
+                    layout: { padding: 80 }, 
                     plugins: { 
                         // LEGEND MOVED TO BOTTOM
                         legend: { 
@@ -418,7 +418,7 @@
                             color: '#fff',
                             anchor: 'end',
                             align: 'end',
-                            offset: 20, // Nice distance
+                            offset: 40, // Nice distance
                             font: { weight: 'bold', size: 14 },
                             formatter: (value, ctx) => { if(value===0) return null; let sum = ctx.dataset.data.reduce((a, b) => a + b, 0); let p = (value * 100 / sum).toFixed(1) + "%"; return `${value}\n(${p})`; }
                         }
@@ -511,5 +511,3 @@
     </script>
 </body>
 </html>
-
-
