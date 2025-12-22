@@ -233,7 +233,8 @@
                         <h3><i class="fas fa-bullhorn"></i> NOTICE BOARD</h3>
                         <div class="callout-box">
                             <h4><i class="fas fa-exclamation-circle"></i> NEC CAMP ALERT</h4>
-                            <p>Occupancy Updated. Total Occupied: <strong>273</strong>. <br>22 Dec 2025 PTP team access NEC Camp to recheck the kitchen and laundry equipment, as there have been two recent power blackouts.</p>
+                            <p>Occupancy Updated. Total Occupied: <strong>273</strong>. <br>
+                            22 Dec 2025 PTP team access NEC Camp to recheck the kitchen and laundry equipment, as there have been two recent power blackouts.</p>
                             <div class="date-badge">Updated: Today</div>
                         </div>
                     </div>
@@ -265,11 +266,10 @@
         Chart.register(ChartDataLabels);
 
         /* =========================================================================
-           🛠️ 🛠️ 🛠️  USER DATA ENTRY ZONE (EDIT HERE)  🛠️ 🛠️ 🛠️
+           🛠️ USER DATA ENTRY ZONE 
            ========================================================================= */
 
-        // 1. COMPANY DATA (Total Count per Company)
-        // Edit numbers here based on your daily report
+        // 1. COMPANY DATA
         const companyDataInput = {
             "BP": 70, 
             "GDSK-JGC": 5, 
@@ -285,7 +285,7 @@
         };
 
         // 2. CAMP BLOCK DATA (NEC Camp Only)
-        // Format: [Occupied, Vacant, OutOfOrder, Visitor, Reserved]
+        // [Occupied, Vacant, OOO, Visitor, Reserved]
         const necCampData = {
             "Block A": [70, 12, 19, 0, 0],
             "Block B": [74, 10, 8, 0, 0],
@@ -294,11 +294,9 @@
             "VIP":     [12, 2, 0, 0, 0]
         };
 
-        // 3. CATEGORY BREAKDOWN DATA (For the bottom big chart)
-        // Ensure the order matches the labels array below
+        // 3. CATEGORY DATA
         const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem"];
         const categoryDataSets = [
-            // A, B, C, D, V values for each company in order
             { label: 'A', data: [52, 3, 1, 5, 3, 5, 1, 0, 0, 0, 0] },
             { label: 'B', data: [2, 0, 0, 6, 2, 7, 0, 2, 54, 0, 1] },
             { label: 'C', data: [0, 0, 19, 4, 0, 0, 0, 1, 35, 0, 3] },
@@ -307,7 +305,7 @@
         ];
 
         /* =========================================================================
-           ⛔ END OF DATA ENTRY ZONE (DO NOT EDIT BELOW) ⛔
+           ⛔ END OF DATA ENTRY ZONE 
            ========================================================================= */
 
         const LIVE_UPDATE_INTERVAL = 5000;
@@ -350,156 +348,4 @@
                 container.innerHTML += `
                     <div class="receptionist">
                         <div class="avatar">
-                            <img src="${person.img}" alt="${person.name}">
-                        </div>
-                        <h4>${person.name}</h4>
-                        <span style="font-size:0.75rem; color:#06b6d4; display:block; margin-bottom:5px;">${person.role}</span>
-                        <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:10px;">${person.phone}</p>
-                        <a href="https://wa.me/${person.wa}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> Chat</a>
-                    </div>`; 
-            });
-        }
-
-        // --- CHARTS LOGIC ---
-        let charts = {};
-        const chartColors = ['#2563eb', '#00ff41', '#ff0000', '#fbbf24', '#f97316']; 
-
-        function calculateTotals(campName) {
-            let stats = { total: 0, occ: 0, vac: 0, ooo: 0, vis: 0, res: 0 };
-            const processCamp = (cName) => {
-                const camp = campDatabase[cName]; if (!camp) return;
-                camp.blocks.forEach((block, index) => {
-                    stats.total += camp.capacity[index]; stats.occ += camp.data[block][0]; stats.vac += camp.data[block][1];
-                    stats.ooo += camp.data[block][2]; stats.vis += camp.data[block][3]; stats.res += camp.data[block][4];
-                });
-            };
-            if (campName === "ALL") Object.keys(campDatabase).forEach(key => processCamp(key)); else processCamp(campName);
-            return stats;
-        }
-
-        function updateDashboard(animationMode = true) {
-            const selectedCamp = document.getElementById('campSelector').value;
-            const stats = calculateTotals(selectedCamp);
-            document.getElementById('kpi-total').innerText = stats.total; document.getElementById('kpi-occupied').innerText = stats.occ;
-            document.getElementById('kpi-vacant').innerText = stats.vac; document.getElementById('kpi-ooo').innerText = stats.ooo;
-            document.getElementById('kpi-visitor').innerText = stats.vis; document.getElementById('kpi-reserved').innerText = stats.res;
-            
-            renderStatusChart(stats, animationMode);
-            renderCompanyChart(animationMode);
-            renderBlockChart(selectedCamp, animationMode);
-            renderCategoryChart(animationMode);
-        }
-
-        function manualUpdate() { updateDashboard(true); }
-
-        function getCommonOptions(animationMode) {
-            return {
-                responsive: true, maintainAspectRatio: false,
-                animation: { duration: animationMode ? 1000 : 0, easing: 'easeOutQuart' }
-            };
-        }
-
-        function renderStatusChart(stats, animationMode) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            if (charts.status) charts.status.destroy();
-            charts.status = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: ['Occupied', 'Vacant', 'OOO', 'Visitor', 'Reserved'], datasets: [{ data: [stats.occ, stats.vac, stats.ooo, stats.vis, stats.res], backgroundColor: chartColors, borderWidth: 0 }] },
-                options: {
-                    ...getCommonOptions(animationMode),
-                    layout: { padding: 40 },
-                    plugins: { 
-                        legend: { position: 'right', labels: { color: '#fff' } },
-                        datalabels: {
-                            color: '#fff', anchor: 'end', align: 'end', offset: 10,
-                            font: { weight: 'bold', size: 12 },
-                            formatter: (value, ctx) => { if(value===0) return null; let sum = ctx.dataset.data.reduce((a, b) => a + b, 0); let p = (value * 100 / sum).toFixed(1) + "%"; return `${value}\n(${p})`; }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderCompanyChart(animationMode) {
-            const ctx = document.getElementById('companyChart').getContext('2d'); if (charts.company) charts.company.destroy();
-            charts.company = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: Object.keys(companyDataInput), datasets: [{ label: 'Residents', data: Object.values(companyDataInput), backgroundColor: '#06b6d4', borderRadius: 5 }] },
-                options: { 
-                    ...getCommonOptions(animationMode),
-                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, 
-                    plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold' } } } 
-                }
-            });
-        }
-
-        function renderBlockChart(campName, animationMode) {
-            const ctx = document.getElementById('blockChart').getContext('2d'); if (charts.block) charts.block.destroy();
-            let labels = [], dOcc = [], dVac = [], dOOO = [], dVis = [], dRes = [];
-            if (campName === "ALL") { labels = Object.keys(campDatabase); labels.forEach(cName => { let s = calculateTotals(cName); dOcc.push(s.occ); dVac.push(s.vac); dOOO.push(s.ooo); dVis.push(s.vis); dRes.push(s.res); }); } 
-            else { const camp = campDatabase[campName]; labels = camp.blocks; labels.forEach(block => { dOcc.push(camp.data[block][0]); dVac.push(camp.data[block][1]); dOOO.push(camp.data[block][2]); dVis.push(camp.data[block][3]); dRes.push(camp.data[block][4]); }); }
-            charts.block = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Occ', data: dOcc, backgroundColor: chartColors[0] }, { label: 'Vac', data: dVac, backgroundColor: chartColors[1] }, { label: 'OOO', data: dOOO, backgroundColor: chartColors[2] }, { label: 'Vis', data: dVis, backgroundColor: chartColors[3] }, { label: 'Res', data: dRes, backgroundColor: chartColors[4] }] },
-                options: { 
-                    ...getCommonOptions(animationMode),
-                    scales: { x: { stacked: true, ticks: { color: '#fff' } }, y: { stacked: true, ticks: { color: '#fff' }, grid: { color: '#334155' } } }, 
-                    plugins: { legend: { labels: { color: '#fff' } }, datalabels: { color: (ctx) => (ctx.datasetIndex === 1 || ctx.datasetIndex === 3) ? 'black' : 'white', font: { weight: 'bold', size: 10 }, display: function(context) { return context.dataset.data[context.dataIndex] > 0; } } } 
-                }
-            });
-        }
-
-        function renderCategoryChart(animationMode) {
-            const ctx = document.getElementById('categoryChart').getContext('2d'); if (charts.category) charts.category.destroy();
-            charts.category = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: categoryLabels,
-                    datasets: [
-                        { label: 'A', data: categoryDataSets[0].data, backgroundColor: '#3b82f6' },
-                        { label: 'B', data: categoryDataSets[1].data, backgroundColor: '#10b981' },
-                        { label: 'C', data: categoryDataSets[2].data, backgroundColor: '#f59e0b' },
-                        { label: 'D', data: categoryDataSets[3].data, backgroundColor: '#ef4444' },
-                        { label: 'V', data: categoryDataSets[4].data, backgroundColor: '#8b5cf6' }
-                    ]
-                },
-                options: {
-                    ...getCommonOptions(animationMode),
-                    scales: { x: { stacked: true, ticks: { color: '#fff', autoSkip: false, maxRotation: 45, minRotation: 45 } }, y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } },
-                    plugins: { 
-                        legend: { labels: { color: '#fff' } },
-                        tooltip: { enabled: true },
-                        datalabels: {
-                            color: 'white', font: { weight: 'bold', size: 10 },
-                            formatter: (value) => { return value > 3 ? value : ""; } 
-                        }
-                    }
-                }
-            });
-        }
-
-        function exportPDF() { const element = document.getElementById('dashboard-content'); html2pdf().set({ margin: 0.2, filename: 'TUCC_Live_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } }).from(element).save(); }
-
-        function toggleLiveMode() {
-            const btn = document.getElementById('liveBtn');
-            if (isLive) {
-                clearInterval(liveTimer); isLive = false;
-                btn.innerHTML = '<i class="fas fa-play"></i> Start Live'; btn.style.borderColor = '#ef4444';
-            } else {
-                startLiveLoop(); isLive = true;
-                btn.innerHTML = '<i class="fas fa-pause"></i> Pause Live'; btn.style.borderColor = '#06b6d4';
-            }
-        }
-
-        function startLiveLoop() {
-            liveTimer = setInterval(() => { updateDashboard(true); }, LIVE_UPDATE_INTERVAL);
-        }
-
-        // Init
-        renderReceptionists();
-        updateDashboard(true);
-        startLiveLoop();
-
-    </script>
-</body>
-</html>
+                            <img src="${person.img}" alt
