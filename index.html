@@ -5,15 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TUCC PROJECT - JGC Live Dashboard</title>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-
-<!-- Excel Reader -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -28,15 +24,35 @@
   --white:#f1f5f9;
   --muted:#94a3b8;
 }
-body{margin:0;background:var(--bg);color:var(--white);font-family:Roboto}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--white);
+  font-family:Roboto;
+}
 header{
   background:linear-gradient(90deg,#0f172a,#1e1b4b);
   padding:15px 30px;
   border-bottom:2px solid #06b6d4;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
-h1{margin:0;font-family:Rajdhani;font-size:2.1rem}
-h2{margin:2px 0 0;font-size:1rem;color:#8b5cf6}
-.dashboard-container{padding:20px;max-width:1400px;margin:auto}
+h1{
+  margin:0;
+  font-family:Rajdhani;
+  font-size:2.1rem;
+}
+h2{
+  margin:2px 0 0;
+  font-size:1rem;
+  color:#8b5cf6;
+}
+.dashboard-container{
+  padding:20px;
+  max-width:1400px;
+  margin:auto;
+}
 .kpi-row{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -48,9 +64,23 @@ h2{margin:2px 0 0;font-size:1rem;color:#8b5cf6}
   border-radius:12px;
   padding:15px;
   text-align:center;
+  border-bottom:4px solid var(--blue);
 }
-.kpi-card h3{font-size:.8rem;color:var(--muted)}
-.kpi-card .value{font-size:2rem;font-family:Rajdhani;font-weight:700}
+.kpi-card h3{
+  font-size:.8rem;
+  color:var(--muted);
+  margin-bottom:5px;
+}
+.kpi-card .value{
+  font-size:2rem;
+  font-family:Rajdhani;
+  font-weight:700;
+}
+.main-grid{
+  display:grid;
+  grid-template-columns:3fr 1fr;
+  gap:20px;
+}
 .chart-row{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -61,15 +91,17 @@ h2{margin:2px 0 0;font-size:1rem;color:#8b5cf6}
   border-radius:12px;
   padding:20px;
 }
-.canvas-container{height:360px}
-input[type=file]{
-  background:#0f172a;
-  color:white;
-  border:1px solid #06b6d4;
-  padding:8px;
-  margin-bottom:20px;
+.chart-card h3{
+  font-family:Rajdhani;
+  margin-bottom:10px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:8px;
+}
+.canvas-container{
+  height:360px;
 }
 @media(max-width:900px){
+  .main-grid{grid-template-columns:1fr}
   .chart-row{grid-template-columns:1fr}
 }
 </style>
@@ -78,121 +110,128 @@ input[type=file]{
 <body>
 
 <header>
-  <h1>TUCC PROJECT</h1>
-  <h2>JGC CAMP MANAGEMENT</h2>
+  <div>
+    <h1>TUCC PROJECT</h1>
+    <h2>JGC CAMP MANAGEMENT</h2>
+  </div>
 </header>
 
 <div class="dashboard-container">
 
-<input type="file" id="excelUpload" accept=".xlsx,.xls">
-
 <div class="kpi-row">
-  <div class="kpi-card"><h3>Occupied</h3><div class="value" id="kOcc">0</div></div>
-  <div class="kpi-card"><h3>Vacant</h3><div class="value" id="kVac">0</div></div>
-  <div class="kpi-card"><h3>Out of Order</h3><div class="value" id="kOOO">0</div></div>
-  <div class="kpi-card"><h3>Reserved</h3><div class="value" id="kRes">0</div></div>
+  <div class="kpi-card"><h3>Total Capacity</h3><div class="value">383</div></div>
+  <div class="kpi-card"><h3>Occupied</h3><div class="value">273</div></div>
+  <div class="kpi-card"><h3>Vacant</h3><div class="value">65</div></div>
+  <div class="kpi-card"><h3>Out of Order</h3><div class="value">45</div></div>
 </div>
 
-<div class="chart-row">
-  <div class="chart-card">
-    <h3>Occupancy Status</h3>
-    <div class="canvas-container"><canvas id="statusChart"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <h3>Residents by Company</h3>
-    <div class="canvas-container"><canvas id="companyChart"></canvas></div>
+<div class="main-grid">
+
+<div>
+  <div class="chart-row">
+    <div class="chart-card">
+      <h3><i class="fas fa-chart-pie"></i> Occupancy Status</h3>
+      <div class="canvas-container">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3><i class="fas fa-building"></i> Residents by Company</h3>
+      <div class="canvas-container">
+        <canvas id="companyChart"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
+</div>
 </div>
 
 <script>
 Chart.register(ChartDataLabels);
 
-let statusChart, companyChart;
-
-document.getElementById("excelUpload").addEventListener("change",e=>{
-  const reader=new FileReader();
-  reader.onload=evt=>{
-    const wb=XLSX.read(evt.target.result,{type:"binary"});
-    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    processExcel(data);
-  };
-  reader.readAsBinaryString(e.target.files[0]);
-});
-
-function processExcel(rows){
-  const statusCount={
-    Occupied:0, Vacant:0, "Out of Order":0, Visitor:0, Reserved:0
-  };
-  const companyCount={};
-
-  rows.forEach(r=>{
-    const s=(r["Status"]||"").toString().trim();
-    if(statusCount[s]!==undefined) statusCount[s]++;
-    const c=r["Company Name"];
-    if(c) companyCount[c]=(companyCount[c]||0)+1;
-  });
-
-  document.getElementById("kOcc").innerText=statusCount["Occupied"];
-  document.getElementById("kVac").innerText=statusCount["Vacant"];
-  document.getElementById("kOOO").innerText=statusCount["Out of Order"];
-  document.getElementById("kRes").innerText=statusCount["Reserved"];
-
-  renderCharts(statusCount,companyCount);
-}
-
-function renderCharts(s,company){
-  if(statusChart) statusChart.destroy();
-  if(companyChart) companyChart.destroy();
-
-  statusChart=new Chart(statusChartCanvas,{
-    type:"doughnut",
-    data:{
-      labels:Object.keys(s),
-      datasets:[{
-        data:Object.values(s),
-        backgroundColor:["#2563eb","#00ff41","#ff0000","#fbbf24","#f97316"]
-      }]
-    },
-    options:{
-      cutout:"55%",
-      plugins:{
-        legend:{position:"right",labels:{color:"#fff",font:{weight:"bold"}}},
-        datalabels:{
-          color:"#fff",
-          formatter:(v,ctx)=>{
-            const t=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-            return v?`${v} (${((v/t)*100).toFixed(1)}%)`:"";
-          }
+/* ---------- OCCUPANCY PIE ---------- */
+new Chart(document.getElementById("statusChart"),{
+  type:"doughnut",
+  data:{
+    labels:["Occupied","Vacant","Out of Order","Visitor","Reserved"],
+    datasets:[{
+      data:[273,65,45,0,0],
+      backgroundColor:["#2563eb","#00ff41","#ff0000","#fbbf24","#f97316"],
+      borderWidth:0
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    cutout:"55%",
+    plugins:{
+      legend:{
+        position:"right",
+        labels:{
+          color:"#ffffff",
+          boxWidth:14,
+          padding:15,
+          font:{size:13,weight:"bold"}
+        }
+      },
+      datalabels:{
+        color:"#ffffff",
+        font:{weight:"bold",size:14},
+        formatter:(v,ctx)=>{
+          if(v===0) return "";
+          const total=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+          return `${v}\n(${((v/total)*100).toFixed(1)}%)`;
         }
       }
     }
-  });
+  }
+});
 
-  companyChart=new Chart(companyChartCanvas,{
-    type:"bar",
-    data:{
-      labels:Object.keys(company),
-      datasets:[{
-        data:Object.values(company),
-        backgroundColor:"#06b6d4",
-        borderRadius:6,
-        barThickness:26
-      }]
-    },
-    options:{
-      scales:{
-        x:{ticks:{autoSkip:false,color:"#fff",maxRotation:45,minRotation:45}},
-        y:{beginAtZero:true,ticks:{color:"#94a3b8"}}
+/* ---------- COMPANY BAR ---------- */
+new Chart(document.getElementById("companyChart"),{
+  type:"bar",
+  data:{
+    labels:["BP","GDSK-JGC","Hydrocore JGC","JGC","KUEHNE JGC","Leighton BP","Leighton JGC","Meindo","Petrosea","Saipem","PSU-PTP"],
+    datasets:[{
+      data:[70,5,1,54,3,20,12,15,89,4,0],
+      backgroundColor:"#06b6d4",
+      borderRadius:6,
+      barThickness:26
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    scales:{
+      x:{
+        ticks:{
+          color:"#ffffff",
+          autoSkip:false,
+          maxRotation:45,
+          minRotation:45
+        },
+        grid:{display:false}
       },
-      plugins:{
-        legend:{display:false},
-        datalabels:{color:"#fff",anchor:"end",align:"top"}
+      y:{
+        beginAtZero:true,
+        ticks:{color:"#94a3b8",stepSize:5},
+        grid:{color:"#334155"}
+      }
+    },
+    plugins:{
+      legend:{display:false},
+      datalabels:{
+        color:"#ffffff",
+        anchor:"end",
+        align:"top",
+        font:{weight:"bold",size:12},
+        formatter:v=>v>0?v:""
       }
     }
-  });
-}
+  }
+});
 </script>
 
 </body>
