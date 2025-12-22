@@ -1,513 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TUCC PROJECT - JGC Live Dashboard</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TUCC PROJECT - JGC Live Dashboard</title>
 
-    <style>
-        :root {
-            --bg-color: #0b1120;
-            --card-bg: #1e293b;
-            --card-bg-glass: rgba(30, 41, 59, 0.98);
-            
-            /* Colors */
-            --col-vacant: #00ff41; 
-            --col-occupied: #2563eb; 
-            --col-ooo: #ff0000; 
-            --col-reserved: #f97316; 
-            --col-visitor: #fbbf24; 
-            
-            /* Stack Colors */
-            --cat-a: #3b82f6; --cat-b: #10b981; --cat-c: #f59e0b; --cat-d: #ef4444; --cat-v: #8b5cf6; 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --accent-cyan: #06b6d4;
-        }
+<!-- Excel Reader -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            overflow-x: hidden;
-        }
-
-        /* Header */
-        header {
-            background: linear-gradient(90deg, #0f172a 0%, #1e1b4b 100%);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--accent-cyan);
-            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.2);
-            position: relative;
-            z-index: 100;
-        }
-
-        .header-title h1 {
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 700;
-            font-size: 2.2rem;
-            text-transform: uppercase;
-            background: linear-gradient(to right, #fff, var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .header-title h2 { font-size: 1.1rem; color: #8b5cf6; margin-bottom: 2px; }
-
-        .live-indicator {
-            display: inline-flex; align-items: center; gap: 5px;
-            font-family: 'Rajdhani', sans-serif; color: var(--col-ooo); font-weight: bold;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .greeting-box { font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: var(--col-reserved); font-weight: 600; margin-top: 5px; }
-
-        .live-clock-container { text-align: right; font-family: 'Rajdhani', sans-serif; }
-        .live-time { font-size: 1.8rem; font-weight: 700; text-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
-        .live-date { font-size: 0.9rem; color: var(--accent-cyan); }
-        .controls { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
-
-        select, button {
-            padding: 8px 12px; border-radius: 5px; border: 1px solid var(--accent-cyan);
-            background-color: #0f172a; color: #ffffff; font-family: 'Rajdhani', sans-serif; font-weight: 600; cursor: pointer;
-        }
-        button:hover { background: var(--accent-cyan); color: black; }
-
-        /* Grid */
-        .dashboard-container { padding: 20px; max-width: 1400px; margin: 0 auto; }
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px; }
-
-        .kpi-card {
-            background: var(--card-bg-glass); border: 1px solid var(--border-color);
-            padding: 15px; border-radius: 12px; text-align: center; position: relative; overflow: hidden;
-            transition: all 0.3s;
-        }
-        .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 0 20px rgba(6, 182, 212, 0.2); }
-        .kpi-card h3 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
-        .kpi-card .value { font-size: 2rem; font-weight: 700; font-family: 'Rajdhani', sans-serif; }
-
-        .kpi-card.occupied { border-bottom: 4px solid var(--col-occupied); color: var(--col-occupied); }
-        .kpi-card.vacant { border-bottom: 4px solid var(--col-vacant); color: var(--col-vacant); text-shadow: 0 0 10px rgba(0,255,65,0.4); }
-        .kpi-card.ooo { border-bottom: 4px solid var(--col-ooo); color: var(--col-ooo); }
-        .kpi-card.visitor { border-bottom: 4px solid var(--col-visitor); color: var(--col-visitor); }
-        .kpi-card.reserved { border-bottom: 4px solid var(--col-reserved); color: var(--col-reserved); }
-
-        .main-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
-        .charts-section { display: flex; flex-direction: column; gap: 20px; }
-        .right-sidebar { display: flex; flex-direction: column; gap: 20px; }
-        
-        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .chart-card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .chart-card h3 { margin-bottom: 15px; font-family: 'Rajdhani', sans-serif; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Fixed Chart Heights */
-        .canvas-container { position: relative; height: 320px; width: 100%; } 
-        .canvas-container.large { height: 350px; }
-        .canvas-container.extra-large { height: 450px; }
-
-        /* Notice Board */
-        .notice-board {
-            background: linear-gradient(180deg, var(--card-bg) 0%, #111827 100%);
-            padding: 20px; border-radius: 12px; border: 1px solid #8b5cf6; 
-        }
-        .notice-board h3 { color: #8b5cf6; font-family: 'Rajdhani', sans-serif; margin-bottom: 20px; text-align: center; }
-        .callout-box { background-color: rgba(139, 92, 246, 0.15); border-left: 5px solid #8b5cf6; padding: 20px; border-radius: 8px; margin-top: 10px; }
-        .callout-box h4 { color: #fff; font-size: 1.2rem; margin-bottom: 10px; font-family: 'Rajdhani', sans-serif; display: flex; align-items: center; gap: 10px; }
-        .callout-box p { color: #e2e8f0; line-height: 1.6; font-size: 1rem; }
-        .callout-box .date-badge { display: inline-block; margin-top: 15px; padding: 4px 10px; background: #8b5cf6; color: white; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-
-        /* Camp Call Center */
-        .call-center-panel {
-            background: linear-gradient(180deg, var(--card-bg) 0%, #1e1b4b 100%);
-            padding: 20px; border-radius: 12px; border: 1px solid #fbbf24;
-            text-align: center;
-        }
-        .call-center-panel h3 { color: #fbbf24; font-family: 'Rajdhani', sans-serif; margin-bottom: 15px; font-size: 1.4rem; }
-        .cc-images { display: flex; flex-direction: column; gap: 15px; align-items: center; margin-bottom: 20px; }
-        .cc-poster { width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .cc-qr { width: 140px; border-radius: 8px; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .cc-contact { margin-top: 10px; }
-        .cc-contact p { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: var(--text-main); font-family: 'Rajdhani', sans-serif; }
-        .btn-full { width: 100%; padding: 12px; font-size: 1rem; display: block; text-align: center; box-sizing: border-box; margin-top: 10px; }
-
-        /* Footer */
-        .reception-footer { margin-top: 30px; padding: 20px; background: var(--card-bg); border-top: 1px solid var(--accent-cyan); border-radius: 12px; }
-        .reception-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
-        .receptionist { 
-            background: rgba(255,255,255,0.03); padding: 20px 15px; border-radius: 10px; text-align: center; transition: 0.3s; border: 1px solid transparent;
-        }
-        .receptionist:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); border-color: rgba(6, 182, 212, 0.3); }
-        .avatar { 
-            width: 80px; height: 80px; background: #334155; border-radius: 50%; margin: 0 auto 15px; 
-            display: flex; align-items: center; justify-content: center; border: 3px solid #fbbf24; 
-            box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); overflow: hidden;
-        }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .whatsapp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background-color: #25D366; color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; transition: 0.3s; }
-        .whatsapp-btn:hover { background-color: #128C7E; transform: scale(1.02); }
-
-        @media (max-width: 900px) {
-            header { flex-direction: column; text-align: center; gap: 15px; }
-            .main-grid { grid-template-columns: 1fr; }
-            .chart-row { grid-template-columns: 1fr; }
-        }
-    </style>
+<style>
+:root{
+  --bg:#0b1120;
+  --card:#1e293b;
+  --border:rgba(255,255,255,0.1);
+  --blue:#2563eb;
+  --green:#00ff41;
+  --red:#ff0000;
+  --yellow:#fbbf24;
+  --orange:#f97316;
+  --white:#f1f5f9;
+  --muted:#94a3b8;
+}
+body{margin:0;background:var(--bg);color:var(--white);font-family:Roboto}
+header{
+  background:linear-gradient(90deg,#0f172a,#1e1b4b);
+  padding:15px 30px;
+  border-bottom:2px solid #06b6d4;
+}
+h1{margin:0;font-family:Rajdhani;font-size:2.1rem}
+h2{margin:2px 0 0;font-size:1rem;color:#8b5cf6}
+.dashboard-container{padding:20px;max-width:1400px;margin:auto}
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:15px;
+  margin-bottom:20px;
+}
+.kpi-card{
+  background:var(--card);
+  border-radius:12px;
+  padding:15px;
+  text-align:center;
+}
+.kpi-card h3{font-size:.8rem;color:var(--muted)}
+.kpi-card .value{font-size:2rem;font-family:Rajdhani;font-weight:700}
+.chart-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+.chart-card{
+  background:var(--card);
+  border-radius:12px;
+  padding:20px;
+}
+.canvas-container{height:360px}
+input[type=file]{
+  background:#0f172a;
+  color:white;
+  border:1px solid #06b6d4;
+  padding:8px;
+  margin-bottom:20px;
+}
+@media(max-width:900px){
+  .chart-row{grid-template-columns:1fr}
+}
+</style>
 </head>
+
 <body>
 
-    <div id="dashboard-content">
-        <header>
-            <div class="header-left">
-                <div class="header-title">
-                    <h1>TUCC PROJECT <span class="live-indicator"><i class="fas fa-circle"></i> LIVE</span></h1>
-                    <h2>JGC CAMP MANAGEMENT</h2>
-                </div>
-                <div class="greeting-box" id="greetingMsg"><i class="fas fa-sun"></i> Good Morning, Team!</div>
-                <div class="tagline" style="color: var(--col-vacant); margin-top:5px; font-style: italic; text-shadow: 0 0 5px rgba(0,255,0,0.5);">Respect and Care</div>
-            </div>
-            <div class="header-right">
-                <div class="live-clock-container"><div class="live-time" id="clockTime">00:00:00</div><div class="live-date" id="clockDate">Mon, 01 Jan 2024</div></div>
-                <div class="controls">
-                    <select id="campSelector" onchange="manualUpdate()">
-                        <option value="ALL">ALL CAMPS OVERVIEW</option>
-                        <option value="NEC">NEC CAMP</option>
-                        <option value="Phoenix 1">PHOENIX 1</option>
-                        <option value="Phoenix 2">PHOENIX 2</option>
-                        <option value="Phoenix 3">PHOENIX 3</option>
-                        <option value="Phoenix 4">PHOENIX 4</option>
-                        <option value="Comcon">COMCON</option>
-                        <option value="Female">FEMALE CAMP</option>
-                    </select>
-                    <button onclick="toggleLiveMode()" id="liveBtn"><i class="fas fa-pause"></i> Pause Live</button>
-                    <button onclick="exportPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
-                </div>
-            </div>
-        </header>
+<header>
+  <h1>TUCC PROJECT</h1>
+  <h2>JGC CAMP MANAGEMENT</h2>
+</header>
 
-        <div class="dashboard-container">
-            <div class="kpi-row">
-                <div class="kpi-card"><h3>Total Capacity</h3><div class="value" id="kpi-total">0</div></div>
-                <div class="kpi-card occupied"><h3>Occupied</h3><div class="value" id="kpi-occupied">0</div></div>
-                <div class="kpi-card vacant"><h3>Vacant</h3><div class="value" id="kpi-vacant">0</div></div>
-                <div class="kpi-card ooo"><h3>Out of Order</h3><div class="value" id="kpi-ooo">0</div></div>
-                <div class="kpi-card visitor"><h3>Visitor</h3><div class="value" id="kpi-visitor">0</div></div>
-                <div class="kpi-card reserved"><h3>Reserved</h3><div class="value" id="kpi-reserved">0</div></div>
-            </div>
+<div class="dashboard-container">
 
-            <div class="main-grid">
-                <div class="charts-section">
-                    <div class="chart-row">
-                        <div class="chart-card">
-                            <h3><span><i class="fas fa-chart-pie"></i> Occupancy Status</span> <i class="fas fa-sync fa-spin" style="font-size:0.8rem; color:var(--accent-cyan); opacity:0.7"></i></h3>
-                            <div class="canvas-container"><canvas id="statusChart"></canvas></div>
-                        </div>
-                        <div class="chart-card">
-                            <h3><span><i class="fas fa-building"></i> Residents by Company</span></h3>
-                            <div class="canvas-container"><canvas id="companyChart"></canvas></div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <h3><span><i class="fas fa-cubes"></i> Block / Camp Breakdown</span></h3>
-                        <div class="canvas-container large"><canvas id="blockChart"></canvas></div>
-                    </div>
-                    <div class="chart-card">
-                        <h3><span><i class="fas fa-layer-group"></i> Category Breakdown (A, B, C, D, V)</span></h3>
-                        <div class="canvas-container extra-large"><canvas id="categoryChart"></canvas></div>
-                    </div>
-                </div>
+<input type="file" id="excelUpload" accept=".xlsx,.xls">
 
-                <div class="right-sidebar">
-                    <div class="notice-board">
-                        <h3><i class="fas fa-bullhorn"></i> NOTICE BOARD</h3>
-                        <div class="callout-box">
-                            <h4><i class="fas fa-exclamation-circle"></i> NEC CAMP ALERT</h4>
-                            <p style="font-size: 0.95rem;">
-                                Occupancy Updated. Total Occupied: <strong>273</strong>.<br><br>
-                                22 Dec 2025 PTP team access NEC Camp to recheck the kitchen and laundry equipment, as there have been two recent power blackouts.
-                            </p>
-                            <div class="date-badge">Updated: Today</div>
-                        </div>
-                    </div>
+<div class="kpi-row">
+  <div class="kpi-card"><h3>Occupied</h3><div class="value" id="kOcc">0</div></div>
+  <div class="kpi-card"><h3>Vacant</h3><div class="value" id="kVac">0</div></div>
+  <div class="kpi-card"><h3>Out of Order</h3><div class="value" id="kOOO">0</div></div>
+  <div class="kpi-card"><h3>Reserved</h3><div class="value" id="kRes">0</div></div>
+</div>
 
-                    <div class="call-center-panel">
-                        <h3><i class="fas fa-headset"></i> CAMP CALL CENTER</h3>
-                        <div class="cc-images">
-                            <img src="https://i.imgur.com/pjAhe5o.png" alt="Call Center Poster" class="cc-poster">
-                            <img src="https://i.imgur.com/VYwr0Tn.png" alt="QR Code" class="cc-qr">
-                        </div>
-                        <div class="cc-contact">
-                            <p><i class="fas fa-phone-alt"></i> +62 811-1089-4447</p>
-                            <a href="https://wa.me/6281110894447" target="_blank" class="whatsapp-btn btn-full">
-                                <i class="fab fa-whatsapp"></i> Chat with Call Center
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="chart-row">
+  <div class="chart-card">
+    <h3>Occupancy Status</h3>
+    <div class="canvas-container"><canvas id="statusChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <h3>Residents by Company</h3>
+    <div class="canvas-container"><canvas id="companyChart"></canvas></div>
+  </div>
+</div>
 
-            <div class="reception-footer">
-                <h3 class="reception-title">CAMP RECEPTION TEAM CONTACTS</h3>
-                <div class="reception-grid" id="reception-grid"></div>
-            </div>
-        </div>
-    </div>
+</div>
 
-    <script>
-        // Ensure Chart.js registers the plugin correctly
-        Chart.register(ChartDataLabels);
+<script>
+Chart.register(ChartDataLabels);
 
-        /* =========================================================================
-           🛠️ USER DATA ENTRY ZONE (EDIT HERE)
-           ========================================================================= */
+let statusChart, companyChart;
 
-        const companyDataInput = {
-            "BP": 70, 
-            "GDSK-JGC": 5, 
-            "Hydrocore JGC": 1, 
-            "JGC": 54, 
-            "KUEHNE JGC": 3, 
-            "Leighton BP": 20, 
-            "Leighton JGC": 12, 
-            "Meindo": 15, 
-            "Petrosea": 89, 
-            "Saipem": 4,
-            "PSU-PTP": 0
-        };
+document.getElementById("excelUpload").addEventListener("change",e=>{
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    const wb=XLSX.read(evt.target.result,{type:"binary"});
+    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    processExcel(data);
+  };
+  reader.readAsBinaryString(e.target.files[0]);
+});
 
-        const necCampData = {
-            "Block A": [70, 12, 19, 0, 0],
-            "Block B": [74, 10, 8, 0, 0],
-            "Block C": [62, 22, 8, 0, 0],
-            "Block D": [55, 19, 10, 0, 0],
-            "VIP":     [12, 2, 0, 0, 0]
-        };
+function processExcel(rows){
+  const statusCount={
+    Occupied:0, Vacant:0, "Out of Order":0, Visitor:0, Reserved:0
+  };
+  const companyCount={};
 
-        const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem"];
-        const categoryDataSets = [
-            { label: 'A', data: [52, 3, 1, 5, 3, 5, 1, 0, 0, 0, 0] },
-            { label: 'B', data: [2, 0, 0, 6, 2, 7, 0, 2, 54, 0, 1] },
-            { label: 'C', data: [0, 0, 19, 4, 0, 0, 0, 1, 35, 0, 3] },
-            { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 55, 0, 0, 0] },
-            { label: 'V', data: [0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0] }
-        ];
+  rows.forEach(r=>{
+    const s=(r["Status"]||"").toString().trim();
+    if(statusCount[s]!==undefined) statusCount[s]++;
+    const c=r["Company Name"];
+    if(c) companyCount[c]=(companyCount[c]||0)+1;
+  });
 
-        /* =========================================================================
-           ⛔ END OF DATA ENTRY ZONE 
-           ========================================================================= */
+  document.getElementById("kOcc").innerText=statusCount["Occupied"];
+  document.getElementById("kVac").innerText=statusCount["Vacant"];
+  document.getElementById("kOOO").innerText=statusCount["Out of Order"];
+  document.getElementById("kRes").innerText=statusCount["Reserved"];
 
-        const LIVE_UPDATE_INTERVAL = 5000;
-        let isLive = true;
-        let liveTimer;
+  renderCharts(statusCount,companyCount);
+}
 
-        const receptionists = [
-            { name: "Mr Ario", role: "Camp Reception", phone: "+62 813 9713 7105", wa: "6281397137105", img: "https://i.imgur.com/0RPPvwl.png" },
-            { name: "Mr Rais", role: "Camp Reception", phone: "+62 812 4056 3934", wa: "6281240563934", img: "https://i.imgur.com/xjjLFhK.png" },
-            { name: "Mr Agung", role: "Camp Reception", phone: "+62 812 5805 6486", wa: "6281258056486", img: "https://i.imgur.com/B5yHfYH.png" },
-            { name: "Mr Deepak", role: "JGC Camp Manager", phone: "+62 813-2288-259", wa: "628132288259", img: "https://i.imgur.com/gTWZ0Aw.png" },
-            { name: "Mr Mario", role: "JGC Camp Admin", phone: "+62 823-1678-5900", wa: "6282316785900", img: "https://i.imgur.com/3v7R09m.png" }
-        ];
+function renderCharts(s,company){
+  if(statusChart) statusChart.destroy();
+  if(companyChart) companyChart.destroy();
 
-        const campDatabase = {
-            "NEC": { blocks: ["Block A", "Block B", "Block C", "Block D", "VIP"], capacity: [101, 92, 92, 84, 14], data: necCampData },
-            "Phoenix 1": { blocks: ["Main"], capacity: [100], data: { "Main": [0, 100, 0, 0, 0] } },
-            "Phoenix 2": { blocks: ["Main"], capacity: [79], data: { "Main": [0, 79, 0, 0, 0] } },
-            "Phoenix 3": { blocks: ["Main"], capacity: [100], data: { "Main": [0, 100, 0, 0, 0] } },
-            "Phoenix 4": { blocks: ["Main"], capacity: [100], data: { "Main": [0, 100, 0, 0, 0] } },
-            "Comcon": { blocks: ["Main"], capacity: [150], data: { "Main": [0, 150, 0, 0, 0] } },
-            "Female": { blocks: ["Main"], capacity: [50], data: { "Main": [0, 50, 0, 0, 0] } }
-        };
-
-        // --- FUNCTIONS ---
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clockTime').innerText = now.toLocaleTimeString('en-US', { hour12: false });
-            document.getElementById('clockDate').innerText = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-            const hour = now.getHours(); let greeting = "Good Morning"; let icon = '<i class="fas fa-coffee"></i>';
-            if (hour >= 12 && hour < 17) { greeting = "Good Afternoon"; icon = '<i class="fas fa-sun"></i>'; } else if (hour >= 17) { greeting = "Good Evening"; icon = '<i class="fas fa-moon"></i>'; }
-            document.getElementById('greetingMsg').innerHTML = `${icon} ${greeting}, Team!`;
+  statusChart=new Chart(statusChartCanvas,{
+    type:"doughnut",
+    data:{
+      labels:Object.keys(s),
+      datasets:[{
+        data:Object.values(s),
+        backgroundColor:["#2563eb","#00ff41","#ff0000","#fbbf24","#f97316"]
+      }]
+    },
+    options:{
+      cutout:"55%",
+      plugins:{
+        legend:{position:"right",labels:{color:"#fff",font:{weight:"bold"}}},
+        datalabels:{
+          color:"#fff",
+          formatter:(v,ctx)=>{
+            const t=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+            return v?`${v} (${((v/t)*100).toFixed(1)}%)`:"";
+          }
         }
-        setInterval(updateClock, 1000); updateClock();
+      }
+    }
+  });
 
-        function renderReceptionists() {
-            const container = document.getElementById('reception-grid'); 
-            container.innerHTML = "";
-            receptionists.forEach(person => { 
-                container.innerHTML += `
-                    <div class="receptionist">
-                        <div class="avatar">
-                            <img src="${person.img}" alt="${person.name}">
-                        </div>
-                        <h4>${person.name}</h4>
-                        <span style="font-size:0.75rem; color:#06b6d4; display:block; margin-bottom:5px;">${person.role}</span>
-                        <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:10px;">${person.phone}</p>
-                        <a href="https://wa.me/${person.wa}" target="_blank" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> Chat</a>
-                    </div>`; 
-            });
-        }
+  companyChart=new Chart(companyChartCanvas,{
+    type:"bar",
+    data:{
+      labels:Object.keys(company),
+      datasets:[{
+        data:Object.values(company),
+        backgroundColor:"#06b6d4",
+        borderRadius:6,
+        barThickness:26
+      }]
+    },
+    options:{
+      scales:{
+        x:{ticks:{autoSkip:false,color:"#fff",maxRotation:45,minRotation:45}},
+        y:{beginAtZero:true,ticks:{color:"#94a3b8"}}
+      },
+      plugins:{
+        legend:{display:false},
+        datalabels:{color:"#fff",anchor:"end",align:"top"}
+      }
+    }
+  });
+}
+</script>
 
-        // --- CHARTS LOGIC ---
-        let charts = {};
-        const chartColors = ['#2563eb', '#00ff41', '#ff0000', '#fbbf24', '#f97316']; 
-
-        function calculateTotals(campName) {
-            let stats = { total: 0, occ: 0, vac: 0, ooo: 0, vis: 0, res: 0 };
-            const processCamp = (cName) => {
-                const camp = campDatabase[cName]; if (!camp) return;
-                camp.blocks.forEach((block, index) => {
-                    stats.total += camp.capacity[index]; stats.occ += camp.data[block][0]; stats.vac += camp.data[block][1];
-                    stats.ooo += camp.data[block][2]; stats.vis += camp.data[block][3]; stats.res += camp.data[block][4];
-                });
-            };
-            if (campName === "ALL") Object.keys(campDatabase).forEach(key => processCamp(key)); else processCamp(campName);
-            return stats;
-        }
-
-        function updateDashboard(animationMode = true) {
-            const selectedCamp = document.getElementById('campSelector').value;
-            const stats = calculateTotals(selectedCamp);
-            document.getElementById('kpi-total').innerText = stats.total; document.getElementById('kpi-occupied').innerText = stats.occ;
-            document.getElementById('kpi-vacant').innerText = stats.vac; document.getElementById('kpi-ooo').innerText = stats.ooo;
-            document.getElementById('kpi-visitor').innerText = stats.vis; document.getElementById('kpi-reserved').innerText = stats.res;
-            
-            renderStatusChart(stats, animationMode);
-            renderCompanyChart(animationMode);
-            renderBlockChart(selectedCamp, animationMode);
-            renderCategoryChart(animationMode);
-        }
-
-        function manualUpdate() { updateDashboard(true); }
-
-        function getCommonOptions(animationMode) {
-            return {
-                responsive: true, maintainAspectRatio: false,
-                animation: { duration: animationMode ? 1000 : 0, easing: 'easeOutQuart' }
-            };
-        }
-
-        // --- UPDATED PIE CHART (FINAL FIX) ---
-        function renderStatusChart(stats, animationMode) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            if (charts.status) charts.status.destroy();
-            charts.status = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: ['Occupied', 'Vacant', 'OOO', 'Visitor', 'Reserved'], datasets: [{ data: [stats.occ, stats.vac, stats.ooo, stats.vis, stats.res], backgroundColor: chartColors, borderWidth: 0 }] },
-                options: {
-                    ...getCommonOptions(animationMode),
-                    // Reduced padding so chart grows, but enough for labels
-                    layout: { padding: 40 }, 
-                    plugins: { 
-                        // LEGEND ON RIGHT SIDE, WHITE TEXT
-                        legend: { 
-                            position: 'right', 
-                            labels: { color: '#ffffff', font: { size: 12 }, padding: 20 } 
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            anchor: 'end',
-                            align: 'end',
-                            offset: 10, // Moderate offset to prevent overlapping
-                            font: { weight: 'bold', size: 14 },
-                            formatter: (value, ctx) => { if(value===0) return null; let sum = ctx.dataset.data.reduce((a, b) => a + b, 0); let p = (value * 100 / sum).toFixed(1) + "%"; return `${value}\n(${p})`; }
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderCompanyChart(animationMode) {
-            const ctx = document.getElementById('companyChart').getContext('2d'); if (charts.company) charts.company.destroy();
-            charts.company = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: Object.keys(companyDataInput), datasets: [{ label: 'Residents', data: Object.values(companyDataInput), backgroundColor: '#06b6d4', borderRadius: 5 }] },
-                options: { 
-                    ...getCommonOptions(animationMode),
-                    // Added GRACE to prevent top label clipping
-                    scales: { y: { beginAtZero: true, grace: '15%', ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, 
-                    plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold' } } } 
-                }
-            });
-        }
-
-        function renderBlockChart(campName, animationMode) {
-            const ctx = document.getElementById('blockChart').getContext('2d'); if (charts.block) charts.block.destroy();
-            let labels = [], dOcc = [], dVac = [], dOOO = [], dVis = [], dRes = [];
-            if (campName === "ALL") { labels = Object.keys(campDatabase); labels.forEach(cName => { let s = calculateTotals(cName); dOcc.push(s.occ); dVac.push(s.vac); dOOO.push(s.ooo); dVis.push(s.vis); dRes.push(s.res); }); } 
-            else { const camp = campDatabase[campName]; labels = camp.blocks; labels.forEach(block => { dOcc.push(camp.data[block][0]); dVac.push(camp.data[block][1]); dOOO.push(camp.data[block][2]); dVis.push(camp.data[block][3]); dRes.push(camp.data[block][4]); }); }
-            charts.block = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Occ', data: dOcc, backgroundColor: chartColors[0] }, { label: 'Vac', data: dVac, backgroundColor: chartColors[1] }, { label: 'OOO', data: dOOO, backgroundColor: chartColors[2] }, { label: 'Vis', data: dVis, backgroundColor: chartColors[3] }, { label: 'Res', data: dRes, backgroundColor: chartColors[4] }] },
-                options: { 
-                    ...getCommonOptions(animationMode),
-                    scales: { x: { stacked: true, ticks: { color: '#fff' } }, y: { stacked: true, ticks: { color: '#fff' }, grid: { color: '#334155' } } }, 
-                    plugins: { legend: { labels: { color: '#fff' } }, datalabels: { color: (ctx) => (ctx.datasetIndex === 1 || ctx.datasetIndex === 3) ? 'black' : 'white', font: { weight: 'bold', size: 10 }, display: function(context) { return context.dataset.data[context.dataIndex] > 0; } } } 
-                }
-            });
-        }
-
-        function renderCategoryChart(animationMode) {
-            const ctx = document.getElementById('categoryChart').getContext('2d'); if (charts.category) charts.category.destroy();
-            charts.category = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: categoryLabels,
-                    datasets: [
-                        { label: 'A', data: categoryDataSets[0].data, backgroundColor: '#3b82f6' },
-                        { label: 'B', data: categoryDataSets[1].data, backgroundColor: '#10b981' },
-                        { label: 'C', data: categoryDataSets[2].data, backgroundColor: '#f59e0b' },
-                        { label: 'D', data: categoryDataSets[3].data, backgroundColor: '#ef4444' },
-                        { label: 'V', data: categoryDataSets[4].data, backgroundColor: '#8b5cf6' }
-                    ]
-                },
-                options: {
-                    ...getCommonOptions(animationMode),
-                    scales: { x: { stacked: true, ticks: { color: '#fff', autoSkip: false, maxRotation: 45, minRotation: 45 } }, y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } },
-                    plugins: { 
-                        legend: { labels: { color: '#fff' } },
-                        tooltip: { enabled: true },
-                        datalabels: {
-                            color: 'white', font: { weight: 'bold', size: 10 },
-                            formatter: (value) => { return value > 3 ? value : ""; } 
-                        }
-                    }
-                }
-            });
-        }
-
-        function exportPDF() { const element = document.getElementById('dashboard-content'); html2pdf().set({ margin: 0.2, filename: 'TUCC_Live_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' } }).from(element).save(); }
-
-        function toggleLiveMode() {
-            const btn = document.getElementById('liveBtn');
-            if (isLive) {
-                clearInterval(liveTimer); isLive = false;
-                btn.innerHTML = '<i class="fas fa-play"></i> Start Live'; btn.style.borderColor = '#ef4444';
-            } else {
-                startLiveLoop(); isLive = true;
-                btn.innerHTML = '<i class="fas fa-pause"></i> Pause Live'; btn.style.borderColor = '#06b6d4';
-            }
-        }
-
-        function startLiveLoop() {
-            liveTimer = setInterval(() => { updateDashboard(true); }, LIVE_UPDATE_INTERVAL);
-        }
-
-        // Init
-        renderReceptionists();
-        updateDashboard(true);
-        startLiveLoop();
-
-    </script>
 </body>
 </html>
