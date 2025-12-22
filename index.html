@@ -113,7 +113,8 @@
         .chart-card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
         .chart-card h3 { margin-bottom: 15px; font-family: 'Rajdhani', sans-serif; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; }
         
-        .canvas-container { position: relative; height: 300px; width: 100%; }
+        /* Fixed Chart Heights */
+        .canvas-container { position: relative; height: 320px; width: 100%; } 
         .canvas-container.large { height: 350px; }
         .canvas-container.extra-large { height: 450px; }
 
@@ -272,7 +273,6 @@
            🛠️ USER DATA ENTRY ZONE (EDIT HERE)
            ========================================================================= */
 
-        // 1. COMPANY DATA (Total Count per Company - From Image image_15c3ac.png)
         const companyDataInput = {
             "BP": 70, 
             "GDSK-JGC": 5, 
@@ -287,8 +287,6 @@
             "PSU-PTP": 0
         };
 
-        // 2. CAMP BLOCK DATA (NEC Camp Only - From Image image_15c32f.png)
-        // Format: [Occupied, Vacant, OutOfOrder, Visitor, Reserved]
         const necCampData = {
             "Block A": [70, 12, 19, 0, 0],
             "Block B": [74, 10, 8, 0, 0],
@@ -297,8 +295,6 @@
             "VIP":     [12, 2, 0, 0, 0]
         };
 
-        // 3. CATEGORY DATA (From Image image_0659b8.png)
-        // This makes the big stacked chart at the bottom
         const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem"];
         const categoryDataSets = [
             { label: 'A', data: [52, 3, 1, 5, 3, 5, 1, 0, 0, 0, 0] },
@@ -401,7 +397,7 @@
             };
         }
 
-        // --- UPDATED PIE CHART (FIXED LABEL DISTANCE) ---
+        // --- UPDATED PIE CHART (FINAL FIX) ---
         function renderStatusChart(stats, animationMode) {
             const ctx = document.getElementById('statusChart').getContext('2d');
             if (charts.status) charts.status.destroy();
@@ -410,15 +406,19 @@
                 data: { labels: ['Occupied', 'Vacant', 'OOO', 'Visitor', 'Reserved'], datasets: [{ data: [stats.occ, stats.vac, stats.ooo, stats.vis, stats.res], backgroundColor: chartColors, borderWidth: 0 }] },
                 options: {
                     ...getCommonOptions(animationMode),
-                    // Increased padding for outer labels
-                    layout: { padding: 100 }, 
+                    // Reduced padding so chart grows, but enough for labels
+                    layout: { padding: 40 }, 
                     plugins: { 
-                        legend: { position: 'right', labels: { color: '#fff' } },
+                        // LEGEND ON RIGHT SIDE, WHITE TEXT
+                        legend: { 
+                            position: 'right', 
+                            labels: { color: '#ffffff', font: { size: 12 }, padding: 20 } 
+                        },
                         datalabels: {
                             color: '#fff',
                             anchor: 'end',
-                            align: 'end',  // Pushes labels outside
-                            offset: 40,    // Increased distance from chart
+                            align: 'end',
+                            offset: 10, // Moderate offset to prevent overlapping
                             font: { weight: 'bold', size: 14 },
                             formatter: (value, ctx) => { if(value===0) return null; let sum = ctx.dataset.data.reduce((a, b) => a + b, 0); let p = (value * 100 / sum).toFixed(1) + "%"; return `${value}\n(${p})`; }
                         }
@@ -434,7 +434,8 @@
                 data: { labels: Object.keys(companyDataInput), datasets: [{ label: 'Residents', data: Object.values(companyDataInput), backgroundColor: '#06b6d4', borderRadius: 5 }] },
                 options: { 
                     ...getCommonOptions(animationMode),
-                    scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, 
+                    // Added GRACE to prevent top label clipping
+                    scales: { y: { beginAtZero: true, grace: '15%', ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, 
                     plugins: { legend: { display: false }, datalabels: { color: '#fff', anchor: 'end', align: 'top', font: { weight: 'bold' } } } 
                 }
             });
