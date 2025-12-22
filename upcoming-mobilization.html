@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Upcoming Mobilization | TUCC PROJECT</title>
 
+<!-- External Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+<!-- Fonts & Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
@@ -24,6 +26,7 @@
   --muted:#94a3b8;
 }
 body{margin:0;background:var(--bg);color:var(--white);font-family:Roboto}
+
 header{
   background:linear-gradient(90deg,#0f172a,#1e1b4b);
   padding:15px 25px;
@@ -140,96 +143,202 @@ canvas{height:320px!important}
 </div>
 
 <script>
-let data=[],charts={};
+let data = [], charts = {};
 
-function weekIdx(d){
-  const diff=Math.floor((new Date(d)-new Date())/(86400000));
-  if(diff<0) return null;
-  return Math.min(4,Math.floor(diff/7));
+/**
+ * Calculates the week index (0-4) based on travel date relative to today.
+ * Returns null if date is invalid, past, or beyond 5 weeks.
+ */
+function weekIdx(d) {
+  if (!d) return null;
+  // Handle Excel date objects or date strings
+  const dateObj = d instanceof Date ? d : new Date(d);
+  if (isNaN(dateObj)) return null;
+
+  // Calculate difference in days from today
+  const diff = Math.floor((dateObj - new Date()) / (86400000));
+  
+  // Filter: Only show upcoming (positive diff) and limit to 5 weeks
+  if (diff < 0) return null;
+  const w = Math.floor(diff / 7);
+  return w > 4 ? null : w;
 }
 
-document.getElementById("excel").addEventListener("change",e=>{
-  const r=new FileReader();
-  r.onload=x=>{
-    const wb=XLSX.read(x.target.result,{type:"binary"});
-    data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+// Event Listener for Excel Upload
+document.getElementById("excel").addEventListener("change", e => {
+  const r = new FileReader();
+  r.onload = x => {
+    // cellDates: true ensures dates are parsed as JS Date objects
+    const wb = XLSX.read(x.target.result, { type: "binary", cellDates: true });
+    data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
     run();
   };
   r.readAsBinaryString(e.target.files[0]);
 });
 
-function run(){
-  const weeks=[0,0,0,0,0];
-  const heat={}, bed={}, direct={Direct:0,Indirect:0};
-  let male=0,female=0;
+function run() {
+  if (!data || data.length === 0) return;
 
-  data.forEach(r=>{
-    const w=weekIdx(r["Travel Date"]);
-    if(w===null) return;
+  // 1. Initialize Variables
+  const weeks = [0, 0, 0, 0, 0];
+  const heat = {};
+  const bed = {};
+  const direct = { "Direct": 0, "Indirect": 0 };
+  let male = 0, female = 0;
+
+  // 2. Process Data Row by Row
+  data.forEach(r => {
+    // Validate Week
+    const w = weekIdx(r["Travel Date"]);
+    if (w === null) return;
+    
     weeks[w]++;
 
-    if(r["Camp Location"]){
-      heat[r["Camp Location"]]??=[0,0,0,0,0];
-      heat[r["Camp Location"]][w]++;
+    // Heatmap Data: Camp Location x Week
+    const camp = r["Camp Location"] ? r["Camp Location"].trim() : "Unknown";
+    if (!heat[camp]) heat[camp] = [0, 0, 0, 0, 0];
+    heat[camp][w]++;
+
+    // Bed Category Data
+    const bCat = r["Bed Category"] ? r["Bed Category"].trim() : "Unassigned";
+    bed[bCat] = (bed[bCat] || 0) + 1;
+
+    // Direct vs Indirect Data
+    const dType = r["Direct / Indirect"] ? r["Direct / Indirect"].trim() : "Indirect";
+    if (/direct/i.test(dType)) direct["Direct"]++;
+    else direct["Indirect"]++;
+
+    // Gender Data
+    const g = r["Male / Female"] ? r["Male / Female"].trim().toLowerCase() : "";
+    if (g === "male") male++;
+    else if (g === "female") female++;
+  });
+
+  // 3. Update KPIs
+  document.getElementById("kTotal").innerText = weeks.reduce((a, b) => a + b, 0);
+  document.getElementById("kW1").innerText = weeks[0];
+  
+  const peakVal = Math.max(...weeks);
+  const peakIdx = weeks.indexOf(peakVal);
+  document.getElementById("kPeak").innerText = peakVal > 0 ? "Week " + (peakIdx + 1) : "-";
+  document.getElementById("kGender").innerText = `${male} / ${female}`;
+
+  // 4. Destroy Old Charts
+  Object.values(charts).forEach(c => c.destroy());
+
+  // Common Styles for Charts
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: '#94a3b8', font: { family: 'Roboto' } } }
+    },
+    scales: {
+      x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+      y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
     }
+  };
 
-    if(r["Bed Category"])
-      bed[r["Bed Category"]] = (bed[r["Bed Category"]]||0)+1;
+  // 5. Render Charts
 
-    if(r["Direct / Indirect"])
-      direct[r["Direct / Indirect"]]++;
-
-    if(r["Male / Female"]==="Male") male++;
-    if(r["Male / Female"]==="Female") female++;
+  // Chart 1: Weekly Trend (Line)
+  charts.week = new Chart(document.getElementById("weekChart"), {
+    type: "line",
+    data: {
+      labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"],
+      datasets: [{
+        label: "Total Pax",
+        data: weeks,
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.25)",
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: "#fbbf24",
+        pointRadius: 4
+      }]
+    },
+    options: {
+      ...commonOptions,
+      plugins: { legend: { display: false } }
+    }
   });
 
-  document.getElementById("kTotal").innerText=weeks.reduce((a,b)=>a+b,0);
-  document.getElementById("kW1").innerText=weeks[0];
-  document.getElementById("kPeak").innerText="Week "+(weeks.indexOf(Math.max(...weeks))+1);
-  document.getElementById("kGender").innerText=`${male} / ${female}`;
-
-  Object.values(charts).forEach(c=>c.destroy());
-
-  charts.week=new Chart(weekChart,{
-    type:"line",
-    data:{labels:["W1","W2","W3","W4","W5"],
-      datasets:[{data:weeks,fill:true,tension:.4,
-        borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.25)"}]},
-    options:{plugins:{legend:{display:false}}}
-  });
-
-  charts.heat=new Chart(heatChart,{
-    type:"bar",
-    data:{
-      labels:Object.keys(heat),
-      datasets:["W1","W2","W3","W4","W5"].map((w,i)=>({
-        label:w,data:Object.values(heat).map(v=>v[i]),
-        backgroundColor:["#22c55e","#2563eb","#fbbf24","#f97316","#ef4444"][i]
+  // Chart 2: Camp x Week Heatmap (Stacked Bar)
+  charts.heat = new Chart(document.getElementById("heatChart"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(heat),
+      datasets: ["W1", "W2", "W3", "W4", "W5"].map((w, i) => ({
+        label: w,
+        data: Object.values(heat).map(v => v[i]),
+        backgroundColor: ["#22c55e", "#2563eb", "#fbbf24", "#f97316", "#ef4444"][i],
+        barPercentage: 0.6
       }))
     },
-    options:{scales:{x:{stacked:true},y:{stacked:true}}}
+    options: {
+      ...commonOptions,
+      scales: {
+        x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+        y: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+      }
+    }
   });
 
-  charts.bed=new Chart(bedChart,{
-    type:"doughnut",
-    data:{labels:Object.keys(bed),
-      datasets:[{data:Object.values(bed),
-        backgroundColor:["#2563eb","#22c55e","#fbbf24","#ef4444","#8b5cf6"]}]}
+  // Chart 3: Bed Category (Donut)
+  charts.bed = new Chart(document.getElementById("bedChart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(bed),
+      datasets: [{
+        data: Object.values(bed),
+        backgroundColor: ["#2563eb", "#22c55e", "#fbbf24", "#ef4444", "#8b5cf6", "#06b6d4"],
+        borderColor: "#1e293b",
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#e5e7eb', boxWidth: 12 } }
+      }
+    }
   });
 
-  charts.direct=new Chart(directChart,{
-    type:"doughnut",
-    data:{labels:Object.keys(direct),
-      datasets:[{data:Object.values(direct),
-        backgroundColor:["#2563eb","#f97316"]}]}
+  // Chart 4: Direct vs Indirect (Donut)
+  charts.direct = new Chart(document.getElementById("directChart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(direct),
+      datasets: [{
+        data: Object.values(direct),
+        backgroundColor: ["#2563eb", "#f97316"],
+        borderColor: "#1e293b",
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#e5e7eb', boxWidth: 12 } }
+      }
+    }
   });
 
-  const bedRisk = Object.values(bed).some(v=>v>weeks[0]*0.7);
+  // 6. Insight / Notice Logic
+  const bedRisk = Object.values(bed).some(v => v > weeks[0] * 0.8); // 80% Threshold
+  
   document.getElementById("notice").innerHTML =
-    `<b>Insight:</b> Peak load in <b>Week ${weeks.indexOf(Math.max(...weeks))+1}</b>.<br>
-     ${bedRisk?"<span style='color:#ef4444'>⚠ Possible bed shortage risk. Review allocation.</span>":"Beds appear sufficient."}`;
+    `<b>Status:</b> Peak mobilization in <b>Week ${peakIdx + 1}</b> (${peakVal} Pax).<br>` +
+    (bedRisk 
+      ? `<span style='color:#ef4444'><i class="fas fa-exclamation-triangle"></i> <b>WARNING:</b> High bed demand detected. Please review allocation immediately.</span>` 
+      : `<span style='color:#22c55e'><i class="fas fa-check-circle"></i> Bed allocation appears sufficient for upcoming load.</span>`);
 }
 </script>
 
 </body>
 </html>
+
