@@ -15,7 +15,7 @@
         :root {
             --bg-color: #0b1120;
             --card-bg: #1e293b;
-            --card-bg-glass: rgba(30, 41, 59, 0.98); /* Less transparent for stability */
+            --card-bg-glass: rgba(30, 41, 59, 0.98);
             
             /* Colors */
             --col-vacant: #00ff41; 
@@ -410,15 +410,16 @@
                 data: { labels: ['Occupied', 'Vacant', 'OOO', 'Visitor', 'Reserved'], datasets: [{ data: [stats.occ, stats.vac, stats.ooo, stats.vis, stats.res], backgroundColor: chartColors, borderWidth: 0 }] },
                 options: {
                     ...getCommonOptions(animationMode),
-                    layout: { padding: 80 }, // INCREASED PADDING TO PREVENT CUTOFF
+                    // Increased padding for outer labels
+                    layout: { padding: 100 }, 
                     plugins: { 
                         legend: { position: 'right', labels: { color: '#fff' } },
                         datalabels: {
                             color: '#fff',
                             anchor: 'end',
-                            align: 'end',  // PUSHES LABELS OUTSIDE
-                            offset: 30,    // INCREASED DISTANCE FROM CHART
-                            font: { weight: 'bold', size: 13 },
+                            align: 'end',  // Pushes labels outside
+                            offset: 40,    // Increased distance from chart
+                            font: { weight: 'bold', size: 14 },
                             formatter: (value, ctx) => { if(value===0) return null; let sum = ctx.dataset.data.reduce((a, b) => a + b, 0); let p = (value * 100 / sum).toFixed(1) + "%"; return `${value}\n(${p})`; }
                         }
                     }
