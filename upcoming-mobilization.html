@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upcoming Mobilization | TUCC PROJECT</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0b1120;
+  --card:#1e293b;
+  --border:rgba(255,255,255,0.1);
+  --blue:#2563eb;
+  --yellow:#fbbf24;
+  --red:#ef4444;
+  --green:#22c55e;
+  --white:#e5e7eb;
+  --muted:#94a3b8;
+}
+body{margin:0;background:var(--bg);color:var(--white);font-family:Roboto}
+header{
+  background:linear-gradient(90deg,#0f172a,#1e1b4b);
+  padding:15px 25px;
+  border-bottom:2px solid var(--blue);
+}
+header h1{margin:0;font-family:Rajdhani;font-size:1.9rem}
+header h2{margin:3px 0 0;color:var(--yellow);font-size:1rem}
+.tagline{margin-top:5px;color:var(--green);font-style:italic}
+
+.container{max-width:1400px;margin:auto;padding:20px}
+
+.upload{
+  background:var(--card);
+  border:1px dashed var(--blue);
+  border-radius:12px;
+  padding:20px;
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.upload input{
+  margin-top:10px;
+  background:#0f172a;
+  border:1px solid var(--blue);
+  color:white;
+  padding:8px;
+}
+
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+  margin-bottom:20px;
+}
+.kpi{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:15px;
+  text-align:center;
+}
+.kpi h4{margin:0;font-size:.8rem;color:var(--muted);text-transform:uppercase}
+.kpi .v{margin-top:8px;font-size:2rem;font-family:Rajdhani;font-weight:700}
+.blue{border-bottom:4px solid var(--blue)}
+.yellow{border-bottom:4px solid var(--yellow)}
+.red{border-bottom:4px solid var(--red)}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:15px;
+}
+.card h3{
+  font-family:Rajdhani;
+  margin-bottom:10px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:8px;
+}
+canvas{height:320px!important}
+
+.notice{
+  margin-top:20px;
+  background:#111827;
+  border-left:5px solid var(--red);
+  padding:15px;
+  border-radius:10px;
+}
+
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>TUCC PROJECT</h1>
+  <h2>JGC CAMP MANAGEMENT – Upcoming Mobilization</h2>
+  <div class="tagline">Respect and Care</div>
+</header>
+
+<div class="container">
+
+<div class="upload">
+  <h3><i class="fas fa-file-excel"></i> Upload Mobilization Excel</h3>
+  <input type="file" id="excel">
+</div>
+
+<div class="kpis">
+  <div class="kpi blue"><h4>Total Pax</h4><div class="v" id="kTotal">0</div></div>
+  <div class="kpi yellow"><h4>Week-1 Pax</h4><div class="v" id="kW1">0</div></div>
+  <div class="kpi red"><h4>Peak Week</h4><div class="v" id="kPeak">-</div></div>
+  <div class="kpi blue"><h4>Male / Female</h4><div class="v" id="kGender">-</div></div>
+</div>
+
+<div class="grid">
+  <div class="card"><h3>Weekly Trend (W1-W5)</h3><canvas id="weekChart"></canvas></div>
+  <div class="card"><h3>Camp × Week Heatmap</h3><canvas id="heatChart"></canvas></div>
+  <div class="card"><h3>Bed Category Demand</h3><canvas id="bedChart"></canvas></div>
+  <div class="card"><h3>Direct vs Indirect</h3><canvas id="directChart"></canvas></div>
+</div>
+
+<div class="notice" id="notice">
+  Upload Excel to view forecast & warnings.
+</div>
+
+</div>
+
+<script>
+let data=[],charts={};
+
+function weekIdx(d){
+  const diff=Math.floor((new Date(d)-new Date())/(86400000));
+  if(diff<0) return null;
+  return Math.min(4,Math.floor(diff/7));
+}
+
+document.getElementById("excel").addEventListener("change",e=>{
+  const r=new FileReader();
+  r.onload=x=>{
+    const wb=XLSX.read(x.target.result,{type:"binary"});
+    data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    run();
+  };
+  r.readAsBinaryString(e.target.files[0]);
+});
+
+function run(){
+  const weeks=[0,0,0,0,0];
+  const heat={}, bed={}, direct={Direct:0,Indirect:0};
+  let male=0,female=0;
+
+  data.forEach(r=>{
+    const w=weekIdx(r["Travel Date"]);
+    if(w===null) return;
+    weeks[w]++;
+
+    if(r["Camp Location"]){
+      heat[r["Camp Location"]]??=[0,0,0,0,0];
+      heat[r["Camp Location"]][w]++;
+    }
+
+    if(r["Bed Category"])
+      bed[r["Bed Category"]] = (bed[r["Bed Category"]]||0)+1;
+
+    if(r["Direct / Indirect"])
+      direct[r["Direct / Indirect"]]++;
+
+    if(r["Male / Female"]==="Male") male++;
+    if(r["Male / Female"]==="Female") female++;
+  });
+
+  document.getElementById("kTotal").innerText=weeks.reduce((a,b)=>a+b,0);
+  document.getElementById("kW1").innerText=weeks[0];
+  document.getElementById("kPeak").innerText="Week "+(weeks.indexOf(Math.max(...weeks))+1);
+  document.getElementById("kGender").innerText=`${male} / ${female}`;
+
+  Object.values(charts).forEach(c=>c.destroy());
+
+  charts.week=new Chart(weekChart,{
+    type:"line",
+    data:{labels:["W1","W2","W3","W4","W5"],
+      datasets:[{data:weeks,fill:true,tension:.4,
+        borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.25)"}]},
+    options:{plugins:{legend:{display:false}}}
+  });
+
+  charts.heat=new Chart(heatChart,{
+    type:"bar",
+    data:{
+      labels:Object.keys(heat),
+      datasets:["W1","W2","W3","W4","W5"].map((w,i)=>({
+        label:w,data:Object.values(heat).map(v=>v[i]),
+        backgroundColor:["#22c55e","#2563eb","#fbbf24","#f97316","#ef4444"][i]
+      }))
+    },
+    options:{scales:{x:{stacked:true},y:{stacked:true}}}
+  });
+
+  charts.bed=new Chart(bedChart,{
+    type:"doughnut",
+    data:{labels:Object.keys(bed),
+      datasets:[{data:Object.values(bed),
+        backgroundColor:["#2563eb","#22c55e","#fbbf24","#ef4444","#8b5cf6"]}]}
+  });
+
+  charts.direct=new Chart(directChart,{
+    type:"doughnut",
+    data:{labels:Object.keys(direct),
+      datasets:[{data:Object.values(direct),
+        backgroundColor:["#2563eb","#f97316"]}]}
+  });
+
+  const bedRisk = Object.values(bed).some(v=>v>weeks[0]*0.7);
+  document.getElementById("notice").innerHTML =
+    `<b>Insight:</b> Peak load in <b>Week ${weeks.indexOf(Math.max(...weeks))+1}</b>.<br>
+     ${bedRisk?"<span style='color:#ef4444'>⚠ Possible bed shortage risk. Review allocation.</span>":"Beds appear sufficient."}`;
+}
+</script>
+
+</body>
+</html>
