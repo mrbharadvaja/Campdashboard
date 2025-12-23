@@ -98,6 +98,7 @@
         .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 0 20px rgba(6, 182, 212, 0.2); }
         .kpi-card h3 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
         .kpi-card .value { font-size: 2rem; font-weight: 700; font-family: 'Rajdhani', sans-serif; }
+        .kpi-card .remark { font-size: 0.7rem; color: #fbbf24; font-style: italic; margin-top: 2px; } /* Added remark style */
 
         .kpi-card.occupied { border-bottom: 4px solid var(--col-occupied); color: var(--col-occupied); }
         .kpi-card.vacant { border-bottom: 4px solid var(--col-vacant); color: var(--col-vacant); text-shadow: 0 0 10px rgba(0,255,65,0.4); }
@@ -201,8 +202,16 @@
             <div class="kpi-row">
                 <div class="kpi-card"><h3>Total Capacity</h3><div class="value" id="kpi-total">0</div></div>
                 <div class="kpi-card occupied"><h3>Occupied</h3><div class="value" id="kpi-occupied">0</div></div>
-                <div class="kpi-card vacant"><h3>Vacant</h3><div class="value" id="kpi-vacant">0</div></div>
-                <div class="kpi-card ooo"><h3>Out of Order</h3><div class="value" id="kpi-ooo">0</div></div>
+                <div class="kpi-card vacant">
+                    <h3>Vacant</h3>
+                    <div class="value" id="kpi-vacant">0</div>
+                    <div class="remark">Reverify ongoing..</div>
+                </div>
+                <div class="kpi-card ooo">
+                    <h3>Out of Order</h3>
+                    <div class="value" id="kpi-ooo">0</div>
+                    <div class="remark">Reverify ongoing..</div>
+                </div>
                 <div class="kpi-card visitor"><h3>Visitor</h3><div class="value" id="kpi-visitor">0</div></div>
                 <div class="kpi-card reserved"><h3>Reserved</h3><div class="value" id="kpi-reserved">0</div></div>
             </div>
@@ -235,8 +244,7 @@
                         <div class="callout-box">
                             <h4><i class="fas fa-exclamation-circle"></i> NEC CAMP ALERT</h4>
                             <p style="font-size: 0.95rem;">
-                                Occupancy Updated. Total Occupied: <strong>273</strong>.<br><br>
-                                PTP GDSK Maintenance team check the All Electric Panel and JB Box.
+                                <strong>GDSK team reverify vacant and out of order room</strong>
                             </p>
                             <div class="date-badge">Updated: Today</div>
                         </div>
@@ -273,35 +281,40 @@
            🛠️ USER DATA ENTRY ZONE (EDIT HERE)
            ========================================================================= */
 
+        // 1. COMPANY DATA (Updated based on image_1d4c21.png)
         const companyDataInput = {
-            "BP": 70, 
-            "GDSK-JGC": 5, 
-            "Hydrocore JGC": 1, 
             "JGC": 54, 
             "KUEHNE JGC": 3, 
             "Leighton BP": 20, 
-            "Leighton JGC": 12, 
             "Meindo": 15, 
-            "Petrosea": 89, 
-            "Saipem": 4,
-            "PSU-PTP": 0
+            "GDSK-JGC": 5, 
+            "Leighton JGC": 12, 
+            "Hydrocore JGC": 1, 
+            "BP": 66,  // Matched from image_1d4c21.png
+            "Petrosea": 87, // Matched from image_1d4c21.png
+            "PSU-PTP": 1, // Matched from image_1d4c21.png
+            "Saipem": 4, 
+            "Leighton PTP": 0
         };
 
+        // 2. CAMP BLOCK DATA (NEC Camp Only - Based on image_1d4c21.png)
+        // Format: [Occupied, Vacant, OutOfOrder, Visitor, Reserved]
         const necCampData = {
             "Block A": [70, 12, 19, 0, 0],
-            "Block B": [74, 10, 8, 0, 0],
-            "Block C": [62, 22, 8, 0, 0],
-            "Block D": [55, 19, 10, 0, 0],
-            "VIP":     [12, 2, 0, 0, 0]
+            "Block B": [73, 9, 9, 0, 1], // Added 1 to Reserved based on 'RESERVED FOR MOBILIZATION' column in image_1d4c21
+            "Block C": [61, 23, 8, 0, 0],
+            "Block D": [53, 21, 10, 0, 0],
+            "VIP":     [11, 3, 0, 0, 0] // Adjusted based on image_1d4c21
         };
 
-        const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem"];
+        // 3. CATEGORY DATA (Based on image_1d4c21.png)
+        const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem", "Leighton PTP"];
         const categoryDataSets = [
-            { label: 'A', data: [52, 3, 1, 5, 3, 5, 1, 0, 0, 0, 0] },
-            { label: 'B', data: [2, 0, 0, 6, 2, 7, 0, 2, 54, 0, 1] },
-            { label: 'C', data: [0, 0, 19, 4, 0, 0, 0, 1, 35, 0, 3] },
-            { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 55, 0, 0, 0] },
-            { label: 'V', data: [0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0] }
+            { label: 'A', data: [52, 3, 1, 5, 3, 5, 1, 0, 0, 0, 0, 0] },
+            { label: 'B', data: [2, 0, 0, 6, 2, 7, 0, 1, 53, 1, 1, 0] }, // BP B=1, Petrosea B=53
+            { label: 'C', data: [0, 0, 19, 4, 0, 0, 0, 1, 34, 0, 3, 0] }, // BP C=1, Petrosea C=34
+            { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 53, 0, 0, 0, 0] }, // BP D=53
+            { label: 'V', data: [0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0] }  // BP V=11
         ];
 
         /* =========================================================================
@@ -316,8 +329,8 @@
             { name: "Mr Ario", role: "Camp Reception", phone: "+62 813 9713 7105", wa: "6281397137105", img: "https://i.imgur.com/0RPPvwl.png" },
             { name: "Mr Rais", role: "Camp Reception", phone: "+62 812 4056 3934", wa: "6281240563934", img: "https://i.imgur.com/xjjLFhK.png" },
             { name: "Mr Agung", role: "Camp Reception", phone: "+62 812 5805 6486", wa: "6281258056486", img: "https://i.imgur.com/B5yHfYH.png" },
-            { name: "Mr Deepak", role: "JGC Camp Team", phone: "+62 813-2288-259", wa: "628132288259", img: "https://i.imgur.com/gTWZ0Aw.png" },
-            { name: "Mr Mario", role: "JGC Camp Team", phone: "+62 823-1678-5900", wa: "6282316785900", img: "https://i.imgur.com/3v7R09m.png" }
+            { name: "Mr Deepak", role: "JGC Camp Manager", phone: "+62 813-2288-259", wa: "628132288259", img: "https://i.imgur.com/gTWZ0Aw.png" },
+            { name: "Mr Mario", role: "JGC Camp Admin", phone: "+62 823-1678-5900", wa: "6282316785900", img: "https://i.imgur.com/3v7R09m.png" }
         ];
 
         const campDatabase = {
@@ -397,7 +410,7 @@
             };
         }
 
-        // --- UPDATED PIE CHART (LEGEND AT BOTTOM) ---
+        // --- UPDATED PIE CHART (LEGEND AT BOTTOM, IMPROVED VISIBILITY) ---
         function renderStatusChart(stats, animationMode) {
             const ctx = document.getElementById('statusChart').getContext('2d');
             if (charts.status) charts.status.destroy();
@@ -407,7 +420,7 @@
                 options: {
                     ...getCommonOptions(animationMode),
                     // Adjusted padding for big chart size
-                    layout: { padding: 80 }, 
+                    layout: { padding: 40 }, 
                     plugins: { 
                         // LEGEND MOVED TO BOTTOM
                         legend: { 
@@ -418,7 +431,7 @@
                             color: '#fff',
                             anchor: 'end',
                             align: 'end',
-                            offset: 40, // Nice distance
+                            offset: 10, // Adjusted offset for better visibility
                             font: { weight: 'bold', size: 14 },
                             formatter: (value, ctx) => { if(value===0) return null; let sum = ctx.dataset.data.reduce((a, b) => a + b, 0); let p = (value * 100 / sum).toFixed(1) + "%"; return `${value}\n(${p})`; }
                         }
@@ -511,5 +524,3 @@
     </script>
 </body>
 </html>
-
-
