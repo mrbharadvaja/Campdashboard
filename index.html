@@ -283,42 +283,42 @@
 
         // 1. COMPANY DATA
         const companyDataInput = {
-            "JGC": 55,          // Corrected from 54 to 55
+            "JGC": 55, 
             "KUEHNE JGC": 3, 
             "Leighton BP": 20, 
             "Meindo": 15, 
             "GDSK-JGC": 5, 
             "Leighton JGC": 12, 
             "Hydrocore JGC": 1, 
-            "BP": 70,           // Updated per image_560ee4.png
-            "Petrosea": 89,     // Updated per image_560ee4.png
+            "BP": 70, 
+            "Petrosea": 88,     // Updated: Decreased to 88
             "PSU-PTP": 1, 
             "Saipem": 4, 
             "Leighton PTP": 0
         };
 
-        // 2. CAMP BLOCK DATA (NEC Camp)
+        // 2. CAMP BLOCK DATA (NEC Camp Only)
         // Format: [Occupied, Vacant, OutOfOrder, Visitor, Reserved]
         const necCampData = {
             "Block A": [70, 12, 19, 0, 0],
-            "Block B": [75, 8, 9, 0, 0],  // Occ: 75, Vac: 8
-            "Block C": [62, 22, 8, 0, 0], // Occ: 62, Vac: 22
-            "Block D": [56, 18, 10, 0, 0], // Occ: 56, Vac: 18
-            "VIP":     [12, 2, 0, 0, 0]   // Occ: 12, Vac: 2
+            "Block B": [74, 9, 9, 0, 0],   // Updated: Occ 74, Vac 9
+            "Block C": [62, 22, 8, 0, 0],
+            "Block D": [56, 18, 10, 0, 0],
+            "VIP":     [12, 2, 0, 0, 0]
         };
 
         // 3. CATEGORY DATA
         const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem", "Leighton PTP"];
         const categoryDataSets = [
-            // A  (JGC A=52)
+            // A
             { label: 'A', data: [52, 3, 1, 5, 3, 5, 1, 0, 0, 0, 0, 0] },
-            // B  (JGC B=3, BP B=1, Petrosea B=54)
-            { label: 'B', data: [3, 0, 0, 6, 2, 7, 0, 1, 54, 1, 1, 0] },
-            // C  (BP C=1, Petrosea C=35)
+            // B (Petrosea updated to 53)
+            { label: 'B', data: [3, 0, 0, 6, 2, 7, 0, 1, 53, 1, 1, 0] },
+            // C
             { label: 'C', data: [0, 0, 19, 4, 0, 0, 0, 1, 35, 0, 3, 0] },
-            // D  (BP D=56)
+            // D
             { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 56, 0, 0, 0, 0] },
-            // V  (BP V=12)
+            // V
             { label: 'V', data: [0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0] }
         ];
         
@@ -529,6 +529,7 @@
     </script>
 </body>
 </html>
+
 
 
 
