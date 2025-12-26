@@ -283,44 +283,57 @@
 
 // 1. COMPANY DATA
         const companyDataInput = {
-            "JGC": 49,          // Updated
+            "JGC": 49,          
             "KUEHNE JGC": 3, 
-            "Leighton BP": 19,  // Updated
-            "Meindo": 14,       // Updated
+            "Leighton BP": 19,  
+            "Meindo": 14,       
             "GDSK-JGC": 5, 
-            "Leighton JGC": 14, // Updated
+            "Leighton JGC": 13, // Updated to 13
             "Hydrocore JGC": 1, 
-            "BP": 71,           // Updated
+            "BP": 71,           
             "Petrosea": 88, 
-            "PSU-PTP": 1, 
             "Saipem": 4, 
+            "PSU-PTP": 1, 
             "Leighton PTP": 0
         };
 
-        // 2. CAMP BLOCK DATA (NEC Camp Only)
-        // Format: [Occupied, Vacant, OutOfOrder, Visitor, Reserved]
-        const necCampData = {
-            "Block A": [63, 18, 20, 0, 0], // Occ: 63, Vac: 18, OOO: 20
-            "Block B": [73, 9, 10, 0, 0],  // Occ: 73, Vac: 9, OOO: 10
-            "Block C": [63, 15, 14, 0, 0], // Occ: 63, Vac: 15, OOO: 14
-            "Block D": [58, 9, 17, 0, 0],  // Occ: 58, Vac: 9, OOO: 17
-            "VIP":     [12, 2, 0, 0, 0]    // Occ: 12, Vac: 2
+        // 2. LAUNDRY STATUS DATA (NEC Only)
+        const laundryDataInput = {
+            "NEC Block A": { pickup: 35, deliver: 35 },
+            "NEC Block B": { pickup: 28, deliver: 28 },
+            "NEC Block C": { pickup: 30, deliver: 30 },
+            "NEC Block D": { pickup: 25, deliver: 25 },
+            "NEC VIP":     { pickup: 5,  deliver: 5 },
+            "Comcon Female": { pickup: 0, deliver: 0 },
+            "Comcon FB":   { pickup: 0, deliver: 0 },
+            "Phoenix 1":   { pickup: 0, deliver: 0 },
+            "Phoenix 2":   { pickup: 0, deliver: 0 }
         };
 
-        // 3. CATEGORY DATA
+        // 3. CAMP BLOCK DATA (NEC Camp)
+        // Format: [Occupied, Vacant, OutOfOrder, Visitor, Reserved]
+        const necCampData = {
+            "Block A": { data: [63, 14, 24, 0, 0], capacity: 102 }, // Occ 63, Vac 14, OOO 24
+            "Block B": { data: [73, 9, 10, 0, 0],  capacity: 92 },  // Occ 73, Vac 9, OOO 10
+            "Block C": { data: [62, 16, 14, 0, 0], capacity: 92 },  // Occ 62, Vac 16, OOO 14
+            "Block D": { data: [58, 9, 17, 0, 0],  capacity: 84 },  // Occ 58, Vac 9, OOO 17
+            "VIP":     { data: [12, 2, 0, 0, 0],   capacity: 14 }   // Occ 12, Vac 2
+        };
+
+        // 4. CATEGORY DATA (Stacked Chart)
         const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem", "Leighton PTP"];
         const categoryDataSets = [
             // A (Total 63)
             { label: 'A', data: [46, 3, 1, 4, 3, 5, 1, 0, 0, 0, 0, 0] },
             // B (Total 73)
             { label: 'B', data: [3, 0, 0, 6, 2, 7, 0, 1, 52, 1, 1, 0] },
-            // C (Total 63)
-            { label: 'C', data: [0, 0, 18, 4, 0, 2, 0, 1, 35, 0, 3, 0] },
+            // C (Total 62) - Updated
+            { label: 'C', data: [0, 0, 18, 4, 0, 1, 0, 1, 35, 0, 3, 0] },
             // D (Total 58)
             { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 57, 1, 0, 0, 0] },
             // V (Total 12)
             { label: 'V', data: [0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0] }
-        ];        
+        ];      
         /* =========================================================================
            ⛔ END OF DATA ENTRY ZONE 
            ========================================================================= */
@@ -528,3 +541,4 @@
     </script>
 </body>
 </html>
+
