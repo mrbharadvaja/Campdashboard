@@ -317,15 +317,15 @@
 
         // 1. COMPANY DATA
         const companyDataInput = {
-            "JGC": 48,          // Updated
+            "JGC": 49,          // Updated
             "KUEHNE JGC": 3, 
-            "Leighton BP": 18,  
-            "Meindo": 12,       
+            "Leighton BP": 17,  
+            "Meindo": 16,       
             "GDSK-JGC": 5, 
             "Leighton JGC": 13, // Updated
             "Hydrocore JGC": 1, 
-            "BP": 72,           // Updated
-            "Petrosea": 87, 
+            "BP": 71,           // Updated
+            "Petrosea": 84, 
             "Saipem": 4, 
             "PSU-PTP": 1, 
             "Leighton PTP": 0
@@ -347,24 +347,24 @@
         // 3. CAMP BLOCK DATA (NEC Camp Only)
         // NEC Data Structure: Object with keys "Block A", "Block B"... containing { data: [...], capacity: ... }
         const necCampData = {
-            "Block A": { data: [61, 15, 24, 0, 1], capacity: 101 }, // Occ 61, Vac 15, OO1 24
+            "Block A": { data: [62, 15, 24, 0, 0], capacity: 101 }, // Occ 62, Vac 15, OO1 24
             "Block B": { data: [71, 12, 09, 0, 0],  capacity: 92 },  // Occ 71, Vac 12, OOO 9
-            "Block C": { data: [62, 15, 15, 0, 0], capacity: 92 },  // Occ 62, Vac 15, OOO 15
-            "Block D": { data: [58, 9, 17, 0, 0],  capacity: 84 },  // Occ 58, Vac 9, OOO 17
+            "Block C": { data: [62, 16, 14, 0, 0], capacity: 92 },  // Occ 62, Vac 16, OOO 14
+            "Block D": { data: [57, 10, 17, 0, 0],  capacity: 84 },  // Occ 58, Vac 10, OOO 17
             "VIP":     { data: [12, 2, 0, 0, 0],   capacity: 14 }   // Occ 12, Vac 2
         };
 
         // 4. CATEGORY DATA (Stacked Chart)
         const categoryLabels = ["JGC", "KUEHNE JGC", "Leighton BP", "Meindo", "GDSK-JGC", "Leighton JGC", "Hydrocore JGC", "BP", "Petrosea", "PSU-PTP", "Saipem", "Leighton PTP"];
         const categoryDataSets = [
-            // A (Total 63)
-            { label: 'A', data: [45, 3, 1, 3, 3, 5, 1, 0, 0, 0, 0, 0] },
-            // B (Total 73)
+            // A (Total 62)
+            { label: 'A', data: [46, 3, 1, 3, 3, 5, 1, 0, 0, 0, 0, 0] },
+            // B (Total 71)
             { label: 'B', data: [3, 0, 0, 5, 2, 7, 0, 1, 51, 1, 1, 0] },
             // C (Total 62)
-            { label: 'C', data: [0, 0, 17, 4, 0, 1, 0, 1, 36, 0, 3, 0] },
-            // D (Total 58)
-            { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 58, 1, 0, 0, 0] },
+            { label: 'C', data: [0, 0, 16, 8, 0, 1, 0, 1, 33, 0, 3, 0] },
+            // D (Total 57)
+            { label: 'D', data: [0, 0, 0, 0, 0, 0, 0, 57, 0, 0, 0, 0] },
             // V (Total 12)
             { label: 'V', data: [0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0] }
         ];
@@ -685,6 +685,7 @@
     </script>
 </body>
 </html>
+
 
 
 
